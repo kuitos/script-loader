@@ -23,6 +23,9 @@
             })(node);
     }
 
+    function noop() {
+    }
+
     var headEl = document.getElementsByTagName('head')[0],
         scriptsCache = [],  // 已加载过的脚本缓存
 
@@ -60,33 +63,43 @@
              */
             loadScriptsAsync: function (scriptList, loadedCallback) {
 
-                var length = scriptList.length;
+                var counter = 0;
 
-                scriptList.forEach(function (src, index) {
+                function addCallbackWhenScriptLoaded(scriptDom, func) {
+
+                    scriptDom.onloadDone = false;
+
+                    // 脚本执行完成之后执行的回调，onreadystatechange在IE中有效，onload在其他浏览器中有效
+                    scriptDom.onload = function () {
+                        // 当最后一个loaded的脚本加载完成之后执行回调函数
+                        if (!(--counter)) {
+                            func();
+                        }
+                    };
+                    scriptDom.onreadystatechange = function () {
+
+                        if (("loaded" === scriptDom.readyState || "complete" === scriptDom.readyState) && !scriptDom.onloadDone) {
+                            scriptDom.onloadDone = true;
+                            scriptDom.onload();
+                        }
+                    };
+
+                }
+
+                scriptList.forEach(function (src) {
+
+                    var scriptDom;
 
                     // 脚本第一次加载
                     if (!~scriptsCache.indexOf(src)) {
 
-                        var scriptDom = document.createElement("script");
+                        counter++;
+
+                        scriptDom = document.createElement("script");
                         // 如果以http://或https://开头，则使用原始路径
                         scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ResourceDir + src);
 
-                        // 当最后一个脚本加载完成之后执行回调函数
-                        if (index === length - 1 && loadedCallback && typeof loadedCallback === "function") {
-                            scriptDom.onloadDone = false;
-
-                            // 脚本执行完成之后执行的回调，onreadystatechange在IE中有效，onload在其他浏览器中有效
-                            scriptDom.onload = function () {
-                                loadedCallback();
-                            };
-                            scriptDom.onreadystatechange = function () {
-
-                                if (("loaded" === scriptDom.readyState || "complete" === scriptDom.readyState) && !scriptDom.onloadDone) {
-                                    scriptDom.onloadDone = true;
-                                    scriptDom.onload();
-                                }
-                            };
-                        }
+                        addCallbackWhenScriptLoaded(scriptDom, loadedCallback);
 
                         headEl.appendChild(scriptDom);
 
