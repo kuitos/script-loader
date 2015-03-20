@@ -99,7 +99,7 @@
                         // 如果以http://或https://开头，则使用原始路径
                         scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ResourceDir + src);
 
-                        addCallbackWhenScriptLoaded(scriptDom, loadedCallback);
+                        addCallbackWhenScriptLoaded(scriptDom, loadedCallback || noop);
 
                         headEl.appendChild(scriptDom);
 
