@@ -23,9 +23,6 @@
             })(node);
     }
 
-    function noop() {
-    }
-
     var headEl = document.getElementsByTagName('head')[0],
         scriptsCache = [],  // 已加载过的脚本缓存
 
@@ -64,6 +61,9 @@
             loadScriptsAsync: function (scriptList, loadedCallback) {
 
                 var counter = 0;
+
+                function noop() {
+                }
 
                 function addCallbackWhenScriptLoaded(scriptDom, func) {
 
