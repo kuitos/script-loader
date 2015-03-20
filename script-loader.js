@@ -1,12 +1,10 @@
 /**
  * Created by kui.liu on 2014/05/29 13:29.
  * 脚本文件加载器
- * @author kui.liu
+ * @author Kuitos lau
+ * @tips 可配置 ScriptLoader.ResourceDir 从而使用相对路径
  */
-
-/**
- * @warning 重要： 使用之前必须设置window.ResourceDir
- */
+;
 (function (window) {
     "use strict";
 
@@ -17,32 +15,40 @@
     function outerHTML(node) {
         // if IE, Chrome take the internal method otherwise build one
         return node.outerHTML || (function (n) {
-            var div = document.createElement('div'), h;
-            div.appendChild(n);
-            h = div.innerHTML;
-            div = null;
-            return h;
-        })(node);
+                var div = document.createElement('div'), h;
+                div.appendChild(n);
+                h = div.innerHTML;
+                div = null;
+                return h;
+            })(node);
     }
 
     var headEl = document.getElementsByTagName('head')[0],
-        libRoot = window.ResourceDir + "js/",
+        scriptsCache = [],  // 已加载过的脚本缓存
 
         ScriptLoader = {
+
+            ResourceDir: window.ResourceDir || "",
 
             /**
              * 同步方式加载script,这种方式加载多个脚本浏览器会并行下载且按标签顺序执行，但是会阻塞后续其他资源(即后面script标签里js代码的执行)
              * @param scriptList 同步加载脚本列表
              */
-            addScriptsSync: function (scriptList) {
+            loadScriptsSync: function (scriptList) {
 
                 scriptList.forEach(function (src) {
 
-                    var scriptDom = document.createElement("script");
-                    // 如果以http://或https://开头，则使用原始路径
-                    scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (libRoot + src);
+                    // 当前脚本第一次加载
+                    if (!~scriptsCache.indexOf(src)) {
 
-                    document.write(outerHTML(scriptDom));
+                        var scriptDom = document.createElement("script");
+                        // 如果以http://或https://开头，则使用原始路径
+                        scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ResourceDir + src);
+
+                        document.write(outerHTML(scriptDom));
+
+                        scriptsCache.push(src);
+                    }
 
                 });
             },
@@ -52,34 +58,40 @@
              * @param scriptList 需要加载的文件列表
              * @param loadedCallback 脚本队列执行完之后执行的回调
              */
-            addScriptsAsync: function (scriptList, loadedCallback) {
+            loadScriptsAsync: function (scriptList, loadedCallback) {
 
                 var length = scriptList.length;
 
                 scriptList.forEach(function (src, index) {
 
-                    var scriptDom = document.createElement("script");
-                    // 如果以http://或https://开头，则使用原始路径
-                    scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (libRoot + src);
+                    // 脚本第一次加载
+                    if (!~scriptsCache.indexOf(src)) {
 
-                    // 当最后一个脚本加载完成之后执行回调函数
-                    if (index === length - 1 && loadedCallback && typeof loadedCallback === "function") {
-                        scriptDom.onloadDone = false;
+                        var scriptDom = document.createElement("script");
+                        // 如果以http://或https://开头，则使用原始路径
+                        scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ResourceDir + src);
 
-                        // 脚本执行完成之后执行的回调，onreadystatechange在IE中有效，onload在其他浏览器中有效
-                        scriptDom.onload = function () {
-                            loadedCallback();
-                        };
-                        scriptDom.onreadystatechange = function () {
+                        // 当最后一个脚本加载完成之后执行回调函数
+                        if (index === length - 1 && loadedCallback && typeof loadedCallback === "function") {
+                            scriptDom.onloadDone = false;
 
-                            if (("loaded" === scriptDom.readyState || "complete" === scriptDom.readyState) && !scriptDom.onloadDone) {
-                                scriptDom.onloadDone = true;
-                                scriptDom.onload();
-                            }
-                        };
+                            // 脚本执行完成之后执行的回调，onreadystatechange在IE中有效，onload在其他浏览器中有效
+                            scriptDom.onload = function () {
+                                loadedCallback();
+                            };
+                            scriptDom.onreadystatechange = function () {
+
+                                if (("loaded" === scriptDom.readyState || "complete" === scriptDom.readyState) && !scriptDom.onloadDone) {
+                                    scriptDom.onloadDone = true;
+                                    scriptDom.onload();
+                                }
+                            };
+                        }
+
+                        headEl.appendChild(scriptDom);
+
+                        scriptsCache.push(src);
                     }
-
-                    headEl.appendChild(scriptDom);
                 });
             },
 
@@ -88,11 +100,11 @@
              * @param scriptList
              * @param loadedCallback
              */
-            addScriptAsyncDelayed: function (scriptList, loadedCallback) {
+            loadScriptAsyncDelayed: function (scriptList, loadedCallback) {
 
                 window.setTimeout(function () {
-                    ScriptLoader.addScriptsAsync(scriptList, loadedCallback);
-                }, 1000);
+                    ScriptLoader.loadScriptsAsync(scriptList, loadedCallback);
+                }, 500);
             }
         };
 
