@@ -60,10 +60,9 @@
              */
             loadScriptsAsync: function (scriptList, loadedCallback) {
 
-                var counter = 0;
-
-                function noop() {
-                }
+                var counter = 0,
+                    loadedCallbackFn = loadedCallback || function () {
+                        };
 
                 function addCallbackWhenScriptLoaded(scriptDom, func) {
 
@@ -75,6 +74,9 @@
                         if (!(--counter)) {
                             func();
                         }
+
+                        // helpful for gc
+                        scriptDom = null;
                     };
                     scriptDom.onreadystatechange = function () {
 
@@ -99,7 +101,7 @@
                         // 如果以http://或https://开头，则使用原始路径
                         scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ResourceDir + src);
 
-                        addCallbackWhenScriptLoaded(scriptDom, loadedCallback || noop);
+                        addCallbackWhenScriptLoaded(scriptDom, loadedCallbackFn);
 
                         headEl.appendChild(scriptDom);
 
