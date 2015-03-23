@@ -2,7 +2,7 @@
  * Created by kui.liu on 2014/05/29 13:29.
  * 脚本文件加载器
  * @author Kuitos lau
- * @tips 可配置 ScriptLoader.ResourceDir 从而使用相对路径
+ * @tips 可配置 ScriptLoader.ROOT_DIR 从而使用相对路径
  */
 ;
 (function (window) {
@@ -28,7 +28,7 @@
 
         ScriptLoader = {
 
-            ResourceDir: window.ResourceDir || "",
+            ROOT_DIR: window.ResourceDir || "",
 
             /**
              * 同步方式加载script,这种方式加载多个脚本浏览器会并行下载且按标签顺序执行，但是会阻塞后续其他资源(即后面script标签里js代码的执行)
@@ -43,7 +43,7 @@
 
                         var scriptDom = document.createElement("script");
                         // 如果以http://或https://开头，则使用原始路径
-                        scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ResourceDir + src);
+                        scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ROOT_DIR + src);
 
                         document.write(outerHTML(scriptDom));
 
@@ -99,7 +99,7 @@
 
                         scriptDom = document.createElement("script");
                         // 如果以http://或https://开头，则使用原始路径
-                        scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ResourceDir + src);
+                        scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ROOT_DIR + src);
 
                         addCallbackWhenScriptLoaded(scriptDom, loadedCallbackFn);
 
