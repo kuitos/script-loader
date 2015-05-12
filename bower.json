@@ -1,0 +1,9 @@
+{
+  "name": "script-loader",
+  "version": "1.0.0",
+  "description": "a simple & lightweight script loader,provide sync & async way to load script",
+  "keywords": [
+    "script loader lightweight"
+  ],
+  "main": "./script-loader.js"
+}
