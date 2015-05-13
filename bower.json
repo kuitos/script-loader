@@ -7,5 +7,5 @@
     "script loader lightweight"
   ],
   "main": "./script-loader.js",
-  "homepage": "https://github.com/kuitos"
+  "homepage": "https://github.com/kuitos/script-loader"
 }
