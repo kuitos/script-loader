@@ -1,10 +1,8 @@
 /**
- * Created by Kuitos on 2014/05/29 13:29.
- * 脚本文件加载器
- * @author Kuitos lau
- * @tips 可配置 ScriptLoader.ROOT_DIR 从而使用相对路径
+ * @author Kuitos
+ * @homepage https://github.com/kuitos/
+ * @since 2015-09-14
  */
-;
 (function (window) {
   "use strict";
 
@@ -59,12 +57,11 @@
      */
     loadScriptsAsync: function (scriptList, loadedCallback) {
 
-      var
-        counter = 0,
+      var counter = 0,
         loadedCallbackFn = loadedCallback || function noop() {
           };
 
-      function addCallbackWhenScriptLoaded(script, func) {
+      function addCallbackWhenScriptLoaded(script, resolve, func) {
 
         script.onloadDone = false;
 
@@ -72,7 +69,7 @@
         script.onload = function () {
           // 当最后一个loaded的脚本加载完成之后执行回调函数
           if (!(--counter)) {
-            func();
+            resolve(func ? func() : undefined);
           }
 
           // helpful for gc
@@ -88,26 +85,31 @@
 
       }
 
-      scriptList.forEach(function (src) {
+      return new Promise(function (resolve) {
 
-        var script;
+        scriptList.forEach(function (src) {
 
-        // 脚本第一次加载
-        if (!~scriptsCache.indexOf(src)) {
+          var script;
 
-          counter++;
+          // 脚本第一次加载
+          if (!~scriptsCache.indexOf(src)) {
 
-          script = document.createElement("script");
-          // 如果以http://或https://开头，则使用原始路径
-          script.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ROOT_DIR + src);
+            counter++;
 
-          addCallbackWhenScriptLoaded(script, loadedCallbackFn);
+            script = document.createElement("script");
+            // 如果以http://或https://开头，则使用原始路径
+            script.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ROOT_DIR + src);
 
-          headEl.appendChild(script);
+            addCallbackWhenScriptLoaded(script, resolve, loadedCallbackFn);
 
-          scriptsCache.push(src);
-        }
+            headEl.appendChild(script);
+
+            scriptsCache.push(src);
+          }
+        });
+
       });
+
     },
 
     /**
@@ -117,9 +119,12 @@
      */
     loadScriptAsyncDelayed: function (scriptList, loadedCallback) {
 
-      window.setTimeout(function () {
-        ScriptLoader.loadScriptsAsync(scriptList, loadedCallback);
-      }, 500);
+      return new Promise(function (resolve) {
+
+        window.setTimeout(function () {
+          resolve(ScriptLoader.loadScriptsAsync(scriptList, loadedCallback));
+        }, 500);
+      });
     }
   };
 
