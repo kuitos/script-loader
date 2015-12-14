@@ -1,0 +1,22 @@
+{
+  "name": "script-loader",
+  "version": "2.0.1",
+  "description": "a simple & lightweight script loader,provide sync & async way to load script",
+  "main": "script-loader.js",
+  "keywords": [
+    "script loader"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kuitos/script-loader.git"
+  },
+  "author": "Kuitos Lau",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kuitos/script-loader/issues"
+  },
+  "homepage": "https://github.com/kuitos/script-loader#readme"
+}
