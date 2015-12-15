@@ -13,7 +13,7 @@ ScriptLoader.loadAsync('index1.js', 'index2.js', function(){
 
 ```
 
-how to use
+install
 
 ```shell
 npm install browser-script-loader --save
