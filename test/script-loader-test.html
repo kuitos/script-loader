@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>script-loader-test</title>
+</head>
+<body>
+
+
+<script src="../script-loader.js"></script>
+
+<div>hello world</div>
+
+<button onclick="loadscript()">click me</button>
+
+<script>
+
+  //  window.ScriptLoader.loadScriptsSync(['index1.js', 'index2.js'], function () {
+  //    console.log('loaded');
+  //  });
+
+  function loadscript() {
+    window.ScriptLoader.loadAsyncExecInOrder('index1.js', 'index2.js', function () {
+      var div = document.createElement('div');
+      div.textContent = 'loaded';
+      document.body.appendChild(div);
+      console.log('loaded');
+    });
+  }
+
+</script>
+
+</body>
+</html>

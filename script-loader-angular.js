@@ -29,12 +29,20 @@
         })(node);
     }
 
+    function createScriptDom(scriptSrc) {
+      var scriptDom = document.createElement("script");
+      // 如果以http://或https://开头，则使用原始路径
+      scriptDom.src = ~scriptSrc.search(/^((http|https):\/\/)/g) ? scriptSrc : (ScriptLoader.BASE_PATH + scriptSrc);
+
+      return scriptDom;
+    }
+
     var headEl = document.getElementsByTagName('head')[0],
       scriptsCache = [];  // 已加载过的脚本缓存
 
     var ScriptLoader = {
 
-      ROOT_DIR: "",
+      BASE_PATH: "",
 
       /**
        * 同步方式加载script,这种方式加载多个脚本浏览器会并行下载且按标签顺序执行，但是会阻塞后续其他资源(即后面script标签里js代码的执行)
@@ -42,18 +50,13 @@
        */
       loadScriptsSync: function (scriptList) {
 
-        scriptList.forEach(function (src) {
+        scriptList.forEach(function (scriptSrc) {
 
           // 当前脚本第一次加载
-          if (!~scriptsCache.indexOf(src)) {
+          if (!~scriptsCache.indexOf(scriptSrc)) {
 
-            var scriptDom = document.createElement("script");
-            // 如果以http://或https://开头，则使用原始路径
-            scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ROOT_DIR + src);
-
-            document.write(outerHTML(scriptDom));
-
-            scriptsCache.push(src);
+            document.write(outerHTML(createScriptDom(scriptSrc)));
+            scriptsCache.push(scriptSrc);
           }
 
         });
@@ -66,22 +69,13 @@
        */
       loadScriptsAsync: function (scriptList, loadedCallback) {
 
-        var
-          counter = 0,
-          loadedCallbackFn = loadedCallback || function noop() {
-            };
-
         function addCallbackWhenScriptLoaded(script, resolve, func) {
 
           script.onloadDone = false;
 
           // 脚本执行完成之后执行的回调，onreadystatechange在IE中有效，onload在其他浏览器中有效
           script.onload = function () {
-            // 当最后一个loaded的脚本加载完成之后执行回调函数
-            if (!(--counter)) {
-              resolve(func ? func() : undefined);
-            }
-
+            resolve();
             // helpful for gc
             script = null;
           };
@@ -95,29 +89,29 @@
 
         }
 
-        return $q(function (resolve) {
+        var scriptPromises = scriptList.map(function (scriptSrc) {
 
-          scriptList.forEach(function (src) {
+          return $q(function (resolve) {
 
-            var script;
-
+            var scriptDom;
             // 脚本第一次加载
-            if (!~scriptsCache.indexOf(src)) {
+            if (!~scriptsCache.indexOf(scriptSrc)) {
 
-              counter++;
+              scriptDom = createScriptDom(scriptSrc);
+              addCallbackWhenScriptLoaded(scriptDom, resolve);
+              headEl.appendChild(scriptDom);
 
-              script = document.createElement("script");
-              // 如果以http://或https://开头，则使用原始路径
-              script.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ROOT_DIR + src);
+              scriptsCache.push(scriptSrc);
 
-              addCallbackWhenScriptLoaded(script, resolve, loadedCallbackFn);
-
-              headEl.appendChild(script);
-
-              scriptsCache.push(src);
+            } else {
+              resolve();
             }
+
           });
+
         });
+
+        return $q.all(scriptPromises).then(loadedCallback || function noop() {});
 
       },
 

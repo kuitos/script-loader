@@ -20,12 +20,21 @@
       })(node);
   }
 
+  function creteScriptDom(scriptSrc) {
+    var scriptDom = document.createElement("script");
+    // 如果以http://或https://开头，则使用原始路径
+    scriptDom.src = ~scriptSrc.search(/^((http|https):\/\/)/g) ? scriptSrc : (ScriptLoader.BASE_PATH + scriptSrc);
+
+    return scriptDom;
+  }
+
   var headEl = document.getElementsByTagName('head')[0],
-    scriptsCache = [];  // 已加载过的脚本缓存
+    loadedScripts = [],  // 已加载过的脚本缓存
+    slice = Array.prototype.slice;
 
   var ScriptLoader = {
 
-    ROOT_DIR: "",
+    BASE_PATH: "",
 
     /**
      * 同步方式加载script,这种方式加载多个脚本浏览器会并行下载且按标签顺序执行，但是会阻塞后续其他资源(即后面script标签里js代码的执行)
@@ -33,18 +42,14 @@
      */
     loadScriptsSync: function (scriptList) {
 
-      scriptList.forEach(function (src) {
+      scriptList.forEach(function (scriptSrc) {
 
         // 当前脚本第一次加载
-        if (!~scriptsCache.indexOf(src)) {
+        if (!~loadedScripts.indexOf(scriptSrc)) {
 
-          var scriptDom = document.createElement("script");
-          // 如果以http://或https://开头，则使用原始路径
-          scriptDom.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ROOT_DIR + src);
+          document.write(outerHTML(creteScriptDom(scriptSrc)));
 
-          document.write(outerHTML(scriptDom));
-
-          scriptsCache.push(src);
+          loadedScripts.push(scriptSrc);
         }
 
       });
@@ -57,21 +62,20 @@
      */
     loadScriptsAsync: function (scriptList, loadedCallback) {
 
-      var counter = 0,
-        loadedCallbackFn = loadedCallback || function noop() {
-          };
+      var scriptList = slice.call(arguments),
+        loadedCallback = scriptList[scriptList.length - 1];
 
-      function addCallbackWhenScriptLoaded(script, resolve, func) {
+      if (typeof loadedCallback === 'function') {
+        scriptList.pop();
+      }
+
+      function addCallbackWhenScriptLoaded(script, resolve) {
 
         script.onloadDone = false;
 
         // 脚本执行完成之后执行的回调，onreadystatechange在IE中有效，onload在其他浏览器中有效
         script.onload = function () {
-          // 当最后一个loaded的脚本加载完成之后执行回调函数
-          if (!(--counter)) {
-            resolve(func ? func() : undefined);
-          }
-
+          resolve();
           // helpful for gc
           script = null;
         };
@@ -85,30 +89,30 @@
 
       }
 
-      return new Promise(function (resolve) {
+      var promises = scriptList.map(function (scriptSrc) {
 
-        scriptList.forEach(function (src) {
+        return new Promise(function (resolve) {
 
-          var script;
+          var scriptDom;
 
           // 脚本第一次加载
-          if (!~scriptsCache.indexOf(src)) {
+          if (!~loadedScripts.indexOf(scriptSrc)) {
 
-            counter++;
+            scriptDom = creteScriptDom(scriptSrc);
+            addCallbackWhenScriptLoaded(scriptDom, resolve);
+            headEl.appendChild(scriptDom);
 
-            script = document.createElement("script");
-            // 如果以http://或https://开头，则使用原始路径
-            script.src = ~src.search(/^((http|https):\/\/)/g) ? src : (this.ROOT_DIR + src);
+            loadedScripts.push(scriptSrc);
 
-            addCallbackWhenScriptLoaded(script, resolve, loadedCallbackFn);
-
-            headEl.appendChild(script);
-
-            scriptsCache.push(src);
+          } else {
+            resolve();
           }
+
         });
 
       });
+
+      return Promise.all(promises).then(loadedCallback || function noop() {});
 
     },
 
@@ -119,10 +123,12 @@
      */
     loadScriptAsyncDelayed: function (scriptList, loadedCallback) {
 
+      var args = slice.call(arguments);
+
       return new Promise(function (resolve) {
 
         window.setTimeout(function () {
-          resolve(ScriptLoader.loadScriptsAsync(scriptList, loadedCallback));
+          resolve(ScriptLoader.loadScriptsAsync.apply(args));
         }, 500);
       });
     }
