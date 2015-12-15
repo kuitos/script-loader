@@ -112,7 +112,8 @@
           counter++;
 
           scriptDom = creteScriptDom(scriptSrc);
-          addCallbackWhenScriptLoaded(scriptDom, loadedCallback || function noop() {});
+          addCallbackWhenScriptLoaded(scriptDom, loadedCallback || function noop() {
+            });
           headEl.appendChild(scriptDom);
 
           loadedScripts.push(scriptSrc);
@@ -157,7 +158,7 @@
       var args = slice.call(arguments);
 
       window.setTimeout(function () {
-        ScriptLoader.loadScriptsAsync.apply(args);
+        ScriptLoader.loadScriptsAsync.apply(ScriptLoader, args);
       }, 500);
     }
   };

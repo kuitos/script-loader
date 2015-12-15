@@ -112,7 +112,8 @@
 
       });
 
-      return Promise.all(promises).then(loadedCallback || function noop() {});
+      return Promise.all(promises).then(loadedCallback || function noop() {
+        });
 
     },
 
@@ -128,7 +129,7 @@
       return new Promise(function (resolve) {
 
         window.setTimeout(function () {
-          resolve(ScriptLoader.loadScriptsAsync.apply(args));
+          resolve(ScriptLoader.loadScriptsAsync.apply(ScriptLoader, args));
         }, 500);
       });
     }
