@@ -1,6 +1,6 @@
 {
   "name": "browser-script-loader",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "a simple & lightweight script loader,provide sync & async way to load script",
   "main": "script-loader.js",
   "keywords": [

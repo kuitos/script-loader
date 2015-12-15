@@ -72,11 +72,42 @@
 
       var counter = 0,
         scriptList = slice.call(arguments),
-        loadedCallback = scriptList[scriptList.length - 1];
+        loadedCallback = scriptList[scriptList.length - 1] || function noop() {
+          },
+        nonLoadScripts;
 
       if (typeof loadedCallback === 'function') {
         scriptList.pop();
       }
+
+      nonLoadScripts = scriptList.filter(function (scriptSrc) {
+        return !~loadedScripts.indexOf(scriptSrc);
+      }); // 未加载过的脚本列表
+
+      if (nonLoadScripts.length) {
+
+        nonLoadScripts.forEach(function (scriptSrc) {
+
+          var scriptDom;
+
+          // 脚本第一次加载
+          if (!~loadedScripts.indexOf(scriptSrc)) {
+
+            counter++;
+
+            scriptDom = creteScriptDom(scriptSrc);
+            addCallbackWhenScriptLoaded(scriptDom, loadedCallback);
+            headEl.appendChild(scriptDom);
+
+            loadedScripts.push(scriptSrc);
+          }
+        });
+
+      } else {
+        loadedCallback();
+      }
+
+      return ScriptLoader;
 
       function addCallbackWhenScriptLoaded(scriptDom, func) {
 
@@ -101,26 +132,6 @@
         };
 
       }
-
-      scriptList.forEach(function (scriptSrc) {
-
-        var scriptDom;
-
-        // 脚本第一次加载
-        if (!~loadedScripts.indexOf(scriptSrc)) {
-
-          counter++;
-
-          scriptDom = creteScriptDom(scriptSrc);
-          addCallbackWhenScriptLoaded(scriptDom, loadedCallback || function noop() {
-            });
-          headEl.appendChild(scriptDom);
-
-          loadedScripts.push(scriptSrc);
-        }
-      });
-
-      return ScriptLoader;
     },
 
     /**
