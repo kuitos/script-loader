@@ -7,8 +7,8 @@
 
 ```js
 
-    ScriptLoader.loadAsync('index1.js', 'index2.js', function(){
-        console.log('loaded');
-    });
+ScriptLoader.loadAsync('index1.js', 'index2.js', function(){
+    console.log('loaded');
+});
 
 ```
