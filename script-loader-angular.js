@@ -9,7 +9,7 @@
   'use strict';
 
   angular
-    .module('ngUtils.loader.scriptLoader', ['ng'])
+    .module('ngUtils.scriptLoader', ['ng'])
     .factory('$scriptLoader', ScriptLoaderConstructor);
 
   ScriptLoaderConstructor.$inject = ['$q'];
@@ -111,7 +111,7 @@
 
         });
 
-        return $q.all(scriptPromises).then(loadedCallback || function noop() {});
+        return $q.all(scriptPromises).then(loadedCallback || function noop(promises) {return promises});
 
       },
 

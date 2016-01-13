@@ -112,8 +112,7 @@
 
       });
 
-      return Promise.all(promises).then(loadedCallback || function noop() {
-        });
+      return Promise.all(promises).then(loadedCallback || function noop(promises) { return promises });
 
     },
 
